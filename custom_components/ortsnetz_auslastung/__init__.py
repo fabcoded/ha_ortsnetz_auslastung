@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
 from datetime import UTC, datetime, timedelta
 
 import aiohttp
@@ -10,6 +11,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.util.unit_conversion import EnergyConverter
 from homeassistant.loader import async_get_integration
 
 from .const import CONF_API_URL, CONF_GRID_FREQUENCY_ENTITY, CONF_L1_ENTITY, CONF_L2_ENTITY, CONF_L3_ENTITY, CONF_LATITUDE, CONF_LONGITUDE, CONF_PLANT_CAPACITY_KWP, CONF_PV_FORECAST_ENTITY, CONF_SMARTMETER_MODEL, DOMAIN, MAX_PHASE_VOLTAGE_V, MIN_PHASE_VOLTAGE_V, PLATFORMS, status_signal, storage_recommendation_signal
@@ -17,14 +19,25 @@ from .const import CONF_API_URL, CONF_GRID_FREQUENCY_ENTITY, CONF_L1_ENTITY, CON
 _LOGGER = logging.getLogger(__name__)
 
 
-def _value(hass: HomeAssistant, entity_id: str) -> float | None:
+def _value(hass: HomeAssistant, entity_id: str, unit: str | None = None) -> float | None:
+    """Return a finite sensor value in the expected unit, or None if that is not possible."""
     state = hass.states.get(entity_id)
     if state is None:
         return None
     try:
-        return float(state.state)
+        value = float(state.state)
     except (TypeError, ValueError):
         return None
+    if not math.isfinite(value):
+        return None
+    state_unit = state.attributes.get("unit_of_measurement")
+    # Sensors without a unit are trusted as before.
+    if unit is None or state_unit in (None, unit):
+        return value
+    if unit == "kWh" and state_unit in EnergyConverter.VALID_UNITS:
+        return EnergyConverter.convert(value, state_unit, unit)
+    _LOGGER.warning("Sensor %s liefert %s, erwartet wird %s", entity_id, state_unit, unit)
+    return None
 
 
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -45,7 +58,7 @@ def _publish(hass: HomeAssistant, entry: ConfigEntry, status: dict | None = None
 async def _send(hass: HomeAssistant, entry: ConfigEntry) -> None:
     # Options override the initial setup data.
     data = {**entry.data, **entry.options}
-    values = [_value(hass, data[key]) for key in (CONF_L1_ENTITY, CONF_L2_ENTITY, CONF_L3_ENTITY)]
+    values = [_value(hass, data[key], "V") for key in (CONF_L1_ENTITY, CONF_L2_ENTITY, CONF_L3_ENTITY)]
     if any(value is None for value in values):
         _LOGGER.warning("Spannungssensor für Ortsnetz-Auslastung ist nicht verfügbar")
         _publish(hass, entry)
@@ -76,16 +89,20 @@ async def _send(hass: HomeAssistant, entry: ConfigEntry) -> None:
         payload[CONF_SMARTMETER_MODEL] = smartmeter_model
     forecast_entity = data.get(CONF_PV_FORECAST_ENTITY)
     if forecast_entity:
-        forecast_kwh = _value(hass, forecast_entity)
+        forecast_kwh = _value(hass, forecast_entity, "kWh")
         if forecast_kwh is None:
             _LOGGER.warning("PV-Forecast-Sensor für Ortsnetz-Auslastung ist nicht verfügbar")
+        elif not 0 <= forecast_kwh <= 100000:
+            _LOGGER.warning("PV-Forecast %g kWh liegt außerhalb von 0 bis 100000 kWh und wird nicht gesendet", forecast_kwh)
         else:
             payload["pv_forecast_kwh"] = forecast_kwh
     frequency_entity = data.get(CONF_GRID_FREQUENCY_ENTITY)
     if frequency_entity:
-        frequency_hz = _value(hass, frequency_entity)
+        frequency_hz = _value(hass, frequency_entity, "Hz")
         if frequency_hz is None:
             _LOGGER.warning("Netzfrequenz-Sensor für Ortsnetz-Auslastung ist nicht verfügbar")
+        elif not 45 <= frequency_hz <= 55:
+            _LOGGER.warning("Netzfrequenz %g Hz liegt außerhalb von 45 bis 55 Hz und wird nicht gesendet", frequency_hz)
         else:
             payload["grid_frequency_hz"] = frequency_hz
     url = data[CONF_API_URL].rstrip("/")
