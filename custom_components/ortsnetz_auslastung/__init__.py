@@ -134,6 +134,19 @@ async def _send(hass: HomeAssistant, entry: ConfigEntry) -> None:
                         recommendation = None
                     _publish(hass, entry, status, recommendation)
                     return
+                if response.status in (403, 422):
+                    if response.status == 403:
+                        _LOGGER.error(
+                            "Ortsnetz-API hat den Standort gesperrt (HTTP 403); "
+                            "Standortangaben prüfen oder den Server-Admin kontaktieren"
+                        )
+                    else:
+                        _LOGGER.error(
+                            "Ortsnetz-API hat die Messung abgelehnt (HTTP 422); "
+                            "Sensorwerte und Konfiguration prüfen"
+                        )
+                    _publish(hass, entry)
+                    return
                 _LOGGER.warning("Ortsnetz-API antwortete mit HTTP %s", response.status)
         except (asyncio.TimeoutError, aiohttp.ClientError, OSError) as error:
             _LOGGER.warning("Ortsnetz-Messung konnte nicht gesendet werden: %s", error)

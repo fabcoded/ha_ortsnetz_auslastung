@@ -82,11 +82,14 @@ Der PV-Forecast kann leer bleiben. Dann werden keine Forecast-Daten übertragen 
 
 ## Prüfung und Fehlerbehebung
 
+Bei HTTP `403` (Standortsperre) und `422` (abgelehnte Messung) erfolgt kein unmittelbarer Wiederholungsversuch. Beide Statussensoren werden sofort als nicht verfügbar markiert. Der nächste reguläre Sendeversuch erfolgt nach fünf Minuten. Bei anderen Übertragungsfehlern bleibt der zweite Versuch nach fünf Sekunden bestehen.
+
 Nach der Einrichtung sollten die Daten nach spätestens fünf Minuten auf der Karte erscheinen. Home-Assistant-Protokolle findest du unter **Einstellungen → System → Protokolle**.
 
 | Meldung | Ursache und Lösung |
 | --- | --- |
 | `403 Forbidden` | Dieser Standort wurde durch den Server-Admin gesperrt. Standortangaben prüfen oder den Server-Admin kontaktieren. |
+| `422` / `Messung abgelehnt` | Die API hat die Messung abgelehnt. Sensorwerte und Konfiguration prüfen. |
 | `Spannungssensor … ist nicht verfügbar` | Eine ausgewählte Sensor-Entität hat keinen numerischen Wert. Entität und Einheit prüfen. |
 | `Netzfrequenz-Sensor … ist nicht verfügbar` | Der Frequenz-Sensor liefert keinen numerischen Hz-Wert. Entität und Einheit prüfen. |
 | Kein Standort auf der Karte | Mindestens fünf Minuten warten, Karte neu laden und die HA-Protokolle prüfen. Besteht das Problem weiter, Zeitpunkt und Fehlermeldung an den Server-Admin geben. |

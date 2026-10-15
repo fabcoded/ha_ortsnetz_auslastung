@@ -174,6 +174,30 @@ async def test_http_error_retries_once(hass, aioclient_mock):
     assert aioclient_mock.call_count == 2
 
 
+@pytest.mark.parametrize(("status", "message"), [
+    (403, "Standort gesperrt (HTTP 403)"),
+    (422, "Messung abgelehnt (HTTP 422)"),
+])
+async def test_permanent_rejection_is_not_retried(hass, aioclient_mock, caplog, status, message):
+    await _setup(hass, aioclient_mock, json=GOOD)
+    await _next_cycle(hass, aioclient_mock, status=status)
+    assert aioclient_mock.call_count == 1
+    assert hass.states.get(STATUS).state == STATE_UNAVAILABLE
+    assert hass.states.get(RECOMMENDATION).state == STATE_UNAVAILABLE
+    assert message in caplog.text
+
+
+@pytest.mark.parametrize("status", [403, 422])
+async def test_regular_upload_recovers_after_permanent_rejection(hass, aioclient_mock, status):
+    await _setup(hass, aioclient_mock, status=status)
+    assert aioclient_mock.call_count == 1
+    assert hass.states.get(STATUS).state == STATE_UNAVAILABLE
+    await _next_cycle(hass, aioclient_mock, json=GOOD)
+    assert aioclient_mock.call_count == 1
+    assert hass.states.get(STATUS).state == "warning"
+    assert hass.states.get(RECOMMENDATION).state == "charge"
+
+
 async def test_invalid_json_is_not_resent(hass, aioclient_mock):
     await _setup(hass, aioclient_mock, json=GOOD)
     await _next_cycle(hass, aioclient_mock, text="kein json")
