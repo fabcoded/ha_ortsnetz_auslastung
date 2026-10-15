@@ -1,4 +1,24 @@
 {
+  "entity": {
+    "sensor": {
+      "voltage_status": {
+        "name": "Grid voltage status",
+        "state": {
+          "normal": "Normal",
+          "warning": "Warning",
+          "critical": "Critical"
+        }
+      },
+      "storage_recommendation": {
+        "name": "Battery storage recommendation",
+        "state": {
+          "charge": "Charge",
+          "discharge": "Discharge",
+          "none": "No action"
+        }
+      }
+    }
+  },
   "config": {
     "step": {
       "user": {

@@ -93,6 +93,23 @@ Nach der Einrichtung sollten die Daten nach spätestens fünf Minuten auf der Ka
 
 API-Adresse, Sensoren, Koordinaten und PV-Angaben können nach der Einrichtung unter **Einstellungen → Geräte & Dienste → Ortsnetz-Auslastung → Konfigurieren** angezeigt und geändert werden. Der Standort wird beim ersten Messwert automatisch aus den Koordinaten erkannt.
 
+## Sensorübersetzungen und bestehende Automationen
+
+Die Sensornamen und die Zustandsanzeige stehen auf Deutsch und Englisch zur Verfügung. Intern verwenden beide Sensoren sprachunabhängige Zustandswerte; Home Assistant übersetzt diese für die Anzeige. Die API-Ampelfarben `green`, `yellow` und `red` werden dazu in `normal`, `warning` und `critical` umgewandelt.
+
+Beim Update bleiben bestehende Entitäts-IDs und selbst vergebene Namen erhalten. Automationen, Skripte und Templates, die bisher deutsche Zustandswerte vergleichen, müssen auf die folgenden Werte umgestellt werden:
+
+| Bisheriger Wert | Neuer interner Wert |
+| --- | --- |
+| `Normal` | `normal` |
+| `Warnung` | `warning` |
+| `Kritisch` | `critical` |
+| `Laden` | `charge` |
+| `Entladen` | `discharge` |
+| `Keine Aktion` | `none` |
+
+Auch die Phasenattribute `L1`, `L2` und `L3` liefern jetzt `normal`, `warning` oder `critical`. Ihre Attributnamen bleiben unverändert. Vergleiche in Automationen verwenden die internen Werte, auch wenn die Oberfläche weiterhin die deutschen Texte anzeigt.
+
 ## Datenschutz
 
 Die Integration übermittelt Koordinaten, Zeitstempel, die drei Spannungswerte, Netzfrequenz sowie Angaben zu PV-Anlage und Forecast. Optional wird Hersteller und Typ des Smartmeters übertragen; diese Angabe ist ausschließlich im geschützten Adminbereich sichtbar. Die öffentliche Karte zeigt Koordinaten nur gerastert mit etwa 100 Metern Genauigkeit. Die Integration sendet die eingetragenen Koordinaten jedoch ungerundet an den Server; die Rasterung betrifft nur die öffentliche Karte. Verwende bei Bedarf die überschreibbaren Koordinaten, um einen alternativen Standort zu senden.

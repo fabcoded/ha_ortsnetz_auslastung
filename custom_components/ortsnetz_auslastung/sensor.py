@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
@@ -12,8 +12,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import status_signal, storage_recommendation_signal
 
-_LABELS = {"green": "Normal", "yellow": "Warnung", "red": "Kritisch"}
-_RECOMMENDATION_LABELS = {"charge": "Laden", "discharge": "Entladen", "none": "Keine Aktion"}
+_STATUS_STATES = {"green": "normal", "yellow": "warning", "red": "critical"}
 
 
 async def async_setup_entry(
@@ -30,7 +29,9 @@ class VoltageStatusSensor(SensorEntity):
 
     _attr_has_entity_name = True
     _attr_should_poll = False
-    _attr_name = "Netzspannungsstatus"
+    _attr_translation_key = "voltage_status"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ["normal", "warning", "critical"]
     _attr_icon = "mdi:transmission-tower"
 
     def __init__(self, entry: ConfigEntry) -> None:
@@ -42,16 +43,16 @@ class VoltageStatusSensor(SensorEntity):
     def native_value(self) -> str | None:
         if self._status is None:
             return None
-        return _LABELS[self._status["overall"]]
+        return _STATUS_STATES[self._status["overall"]]
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         if self._status is None:
             return None
         return {
-            "L1": _LABELS[self._status["l1"]],
-            "L2": _LABELS[self._status["l2"]],
-            "L3": _LABELS[self._status["l3"]],
+            "L1": _STATUS_STATES[self._status["l1"]],
+            "L2": _STATUS_STATES[self._status["l2"]],
+            "L3": _STATUS_STATES[self._status["l3"]],
         }
 
     async def async_added_to_hass(self) -> None:
@@ -72,7 +73,9 @@ class BatteryStorageRecommendationSensor(SensorEntity):
 
     _attr_has_entity_name = True
     _attr_should_poll = False
-    _attr_name = "Batteriespeicherempfehlung"
+    _attr_translation_key = "storage_recommendation"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ["charge", "discharge", "none"]
     _attr_icon = "mdi:battery-sync-outline"
 
     def __init__(self, entry: ConfigEntry) -> None:
@@ -84,7 +87,7 @@ class BatteryStorageRecommendationSensor(SensorEntity):
     def native_value(self) -> str | None:
         if self._recommendation is None:
             return None
-        return _RECOMMENDATION_LABELS[self._recommendation]
+        return self._recommendation
 
     async def async_added_to_hass(self) -> None:
         self.async_on_remove(
