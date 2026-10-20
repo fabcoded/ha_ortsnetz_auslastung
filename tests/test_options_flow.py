@@ -86,6 +86,20 @@ async def test_cleared_fields_are_not_suggested_again(hass):
         assert key.default is vol.UNDEFINED
 
 
+async def test_cleared_capacity_also_omits_kept_forecast(hass, aioclient_mock):
+    entry = _entry(hass)
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    await hass.config_entries.options.async_configure(
+        result["flow_id"], _form(pv_forecast_entity="sensor.forecast")
+    )
+    payload = await _payload(hass, aioclient_mock, entry)
+    assert entry.options["plant_capacity_kwp"] is None
+    assert entry.options["pv_forecast_entity"] == "sensor.forecast"
+    assert payload["l1_v"] == 230
+    assert "plant_capacity_kwp" not in payload
+    assert "pv_forecast_kwh" not in payload
+
+
 async def test_kept_and_changed_optional_values_are_sent(hass, aioclient_mock):
     entry = _entry(hass)
     result = await hass.config_entries.options.async_init(entry.entry_id)

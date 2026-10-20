@@ -65,6 +65,39 @@ async def test_valid_response_sets_values(hass, aioclient_mock):
     assert hass.states.get(RECOMMENDATION).state == "charge"
 
 
+@pytest.mark.parametrize("measured_phases", [(1,), (2,), (3,), (1, 2), (1, 3), (2, 3)])
+async def test_excluded_phase_status_and_recovery(hass, aioclient_mock, measured_phases):
+    await _setup(hass, aioclient_mock, json=GOOD)
+    status = {"overall": "yellow"}
+    for phase in (1, 2, 3):
+        measured = phase in measured_phases
+        hass.states.async_set(f"sensor.l{phase}", "243" if measured else "-1", {"unit_of_measurement": "V"})
+        status[f"l{phase}"] = "yellow" if measured else "unavailable"
+
+    await _next_cycle(hass, aioclient_mock, json={"status": status, "storage_recommendation": "charge"})
+
+    assert aioclient_mock.call_count == 1
+    assert hass.states.get(STATUS).state == "warning"
+    assert hass.states.get(RECOMMENDATION).state == "charge"
+    for phase in (1, 2, 3):
+        assert hass.states.get(STATUS).attributes[f"L{phase}"] == (
+            "warning" if phase in measured_phases else "unavailable"
+        )
+
+    for phase in (1, 2, 3):
+        hass.states.async_set(f"sensor.l{phase}", "-1")
+    await _next_cycle(hass, aioclient_mock, json=GOOD)
+    assert aioclient_mock.call_count == 0
+    assert hass.states.get(STATUS).state == STATE_UNAVAILABLE
+    assert hass.states.get(RECOMMENDATION).state == STATE_UNAVAILABLE
+
+    for phase in (1, 2, 3):
+        hass.states.async_set(f"sensor.l{phase}", "230")
+    await _next_cycle(hass, aioclient_mock, json=GOOD)
+    assert hass.states.get(STATUS).state == "warning"
+    assert hass.states.get(RECOMMENDATION).state == "charge"
+
+
 @pytest.mark.parametrize(("language", "voltage_name", "storage_name"), [
     ("de", "Netzspannungsstatus", "Batteriespeicherempfehlung"),
     ("en", "Grid voltage status", "Battery storage recommendation"),

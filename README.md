@@ -21,7 +21,9 @@ Beim Einrichten legt die Integration zusätzlich die Entitäten **Netzspannungss
 
 Die Integration ist nicht für Werte wie `unknown`, `unavailable` oder Text geeignet. In diesem Fall wird die betreffende Übertragung übersprungen und in den Home-Assistant-Protokollen vermerkt.
 
-Die drei Phasenspannungen werden zusätzlich auf einen plausiblen Bereich von 150 bis 300 V geprüft. Liegt eine Phase außerhalb dieses Bereichs, überträgt die Integration keinen Datensatz und schreibt eine Fehlermeldung in das Home-Assistant-Protokoll. Prüfe dann insbesondere die Auswahl und Einheit der Sensor-Entität.
+Measured phase voltages must be between 150 and 300 V. A selected sensor reporting exactly `-1` excludes that phase from evaluation. At least one phase must provide a valid voltage; other invalid or unavailable values still prevent transmission. Excluded phases appear as `unavailable` in the `L1`, `L2` and `L3` status attributes. The overall status and battery recommendation remain available for the measured phases.
+
+For example, sensor values `230`, `-1`, `-1` submit a single-phase measurement. All three sensor fields still require a sensor entity; `-1` is the sensor state, not an entity ID to enter in the configuration dialog.
 
 > **Wichtig:** Wähle für L1, L2 und L3 immer die Spannungs-Sensoren des Smartmeters deiner PV-Anlage aus. Wähle auch die Netzfrequenz bevorzugt vom selben Smartmeter. Andere Spannungs- oder Frequenzwerte, etwa von Steckdosen, Wechselrichtern oder einzelnen Geräten, bilden die Netzqualität am Anschluss nicht zuverlässig ab und dürfen nicht verwendet werden.
 
@@ -66,8 +68,8 @@ Warte, bis Home Assistant wieder vollständig erreichbar ist.
    | Sensor L1 | Sensor-Entität für Phase L1 |
    | Sensor L2 | Sensor-Entität für Phase L2 |
    | Sensor L3 | Sensor-Entität für Phase L3 |
-   | Anlagengröße (kWp) | Optional. Installierte Nennleistung der PV-Anlage in Kilowatt-Peak, z. B. `9.8` mit Punkt als Trenner. Nur mit Anlagengröße kann der Forecast-Ertrag in kWh/kWp/Tag berechnet werden. |
-   | PV-Forecast heute (kWh) | Optionaler Forecast-Sensor für den erwarteten PV-Ertrag des aktuellen Tages in Kilowattstunden |
+   | Anlagengröße (kWp) | Optional, für die Forecast-Übertragung erforderlich. Tatsächlich installierte Nennleistung der PV-Anlage in Kilowatt-Peak, z. B. `9.8` mit Punkt als Trenner. |
+   | PV-Forecast heute (kWh) | Optionaler Forecast-Sensor für den erwarteten PV-Ertrag des aktuellen Tages; wird nur mit konfigurierter Anlagengröße übertragen |
    | Smartmeter Hersteller / Typ | Optionaler Freitext, z. B. Hersteller und Modell des Smartmeters. Er wird nur im Adminbereich der Ortsnetz-Auslastung angezeigt. |
    | Netzfrequenz (Hz) | Frequenz-Sensor des Smartmeters, dessen Wert in Hertz geliefert wird |
    | Breitengrad / Längengrad | Standardmäßig der Home-Assistant-Standort; bei Bedarf überschreiben |
@@ -78,7 +80,7 @@ Bei einer Basis-URL ergänzt die Integration automatisch `/v1/measurements`. Ein
 
 Die Integration sendet sofort einen ersten Datensatz und danach alle fünf Minuten. Die Kartenansicht aktualisiert sich im Live-Modus alle 15 Minuten; ein manuelles Neuladen zeigt den neuen Standort sofort.
 
-Der PV-Forecast kann leer bleiben. Dann werden keine Forecast-Daten übertragen und die Karte zeigt für diesen Standort keinen Forecast-Ertrag. Auch die Anlagengröße kann leer bleiben; ein vorhandener Forecast wird dann zwar übertragen, aber nicht als spezifischer Forecast-Ertrag in kWh/kWp/Tag berechnet. Wenn Forecast-Sensor und Anlagengröße angegeben sind, wird der Forecast-Ertrag als `Forecast (kWh) ÷ Anlagengröße (kWp) = kWh/kWp/Tag` berechnet.
+PV-Forecast und Anlagengröße können leer bleiben. Ohne konfigurierte Anlagengröße lässt die Integration einen ausgewählten Forecast weg und schreibt einen Hinweis ins Protokoll; die Spannungswerte werden weiterhin übertragen. Dasselbe gilt für Forecasts über dem API-Limit von 10 kWh je kWp pro Tag. Bei gültigen Angaben wird der spezifische Forecast-Ertrag als `Forecast (kWh) ÷ Anlagengröße (kWp) = kWh/kWp/Tag` berechnet. Die Integration verlässt sich nicht auf eine möglicherweise bereits serverseitig gespeicherte Anlagengröße, sondern sendet die konfigurierte Größe zusammen mit dem Forecast.
 
 ## Prüfung und Fehlerbehebung
 
@@ -92,6 +94,7 @@ Nach der Einrichtung sollten die Daten nach spätestens fünf Minuten auf der Ka
 | `422` / `Messung abgelehnt` | Die API hat die Messung abgelehnt. Sensorwerte und Konfiguration prüfen. |
 | `Spannungssensor … ist nicht verfügbar` | Eine ausgewählte Sensor-Entität hat keinen numerischen Wert. Entität und Einheit prüfen. |
 | `Netzfrequenz-Sensor … ist nicht verfügbar` | Der Frequenz-Sensor liefert keinen numerischen Hz-Wert. Entität und Einheit prüfen. |
+| `PV-Forecast wird nicht gesendet: Anlagengröße (kWp) fehlt` | Unter **Konfigurieren** die tatsächliche PV-Anlagengröße eintragen oder den Forecast-Sensor entfernen. Spannungswerte werden weiterhin gesendet. |
 | Kein Standort auf der Karte | Mindestens fünf Minuten warten, Karte neu laden und die HA-Protokolle prüfen. Besteht das Problem weiter, Zeitpunkt und Fehlermeldung an den Server-Admin geben. |
 
 API-Adresse, Sensoren, Koordinaten und PV-Angaben können nach der Einrichtung unter **Einstellungen → Geräte & Dienste → Ortsnetz-Auslastung → Konfigurieren** angezeigt und geändert werden. Der Standort wird beim ersten Messwert automatisch aus den Koordinaten erkannt.

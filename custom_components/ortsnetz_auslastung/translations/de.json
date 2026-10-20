@@ -28,7 +28,7 @@
           "api_url": "API-Adresse",
           "grid_frequency_entity": "Netzfrequenz (Hz) – optional",
           "plant_capacity_kwp": "Anlagengröße (kWp) – optional",
-          "pv_forecast_entity": "PV-Forecast heute (kWh) – optional",
+          "pv_forecast_entity": "PV-Forecast heute (kWh) – optional, benötigt Anlagengröße",
           "smartmeter_model": "Smartmeter Hersteller / Typ – optional",
           "latitude": "Breitengrad",
           "longitude": "Längengrad"
@@ -59,7 +59,7 @@
           "api_url": "API-Adresse",
           "grid_frequency_entity": "Netzfrequenz (Hz) – optional",
           "plant_capacity_kwp": "Anlagengröße (kWp) – optional",
-          "pv_forecast_entity": "PV-Forecast heute (kWh) – optional",
+          "pv_forecast_entity": "PV-Forecast heute (kWh) – optional, benötigt Anlagengröße",
           "smartmeter_model": "Smartmeter Hersteller / Typ – optional",
           "latitude": "Breitengrad",
           "longitude": "Längengrad"

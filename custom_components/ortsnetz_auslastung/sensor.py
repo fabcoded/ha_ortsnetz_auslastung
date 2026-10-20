@@ -12,7 +12,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import status_signal, storage_recommendation_signal
 
-_STATUS_STATES = {"green": "normal", "yellow": "warning", "red": "critical"}
+_STATUS_STATES = {"green": "normal", "yellow": "warning", "red": "critical", "unavailable": "unavailable"}
 
 
 async def async_setup_entry(

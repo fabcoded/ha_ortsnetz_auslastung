@@ -66,14 +66,18 @@ async def _send(hass: HomeAssistant, entry: ConfigEntry) -> None:
     invalid_phases = [
         f"L{index}={value:g} V"
         for index, value in enumerate(values, start=1)
-        if value < MIN_PHASE_VOLTAGE_V or value > MAX_PHASE_VOLTAGE_V
+        if value != -1 and not MIN_PHASE_VOLTAGE_V <= value <= MAX_PHASE_VOLTAGE_V
     ]
     if invalid_phases:
         _LOGGER.error(
             "Ortsnetz-Auslastung sendet keine Messung: unplausible Phasenspannung (%s). "
-            "Erwartet werden Werte zwischen %g und %g V; Sensor-Auswahl und Einheit prüfen.",
+            "Erwartet werden Werte zwischen %g und %g V oder -1 für ausgeschlossene Phasen; Sensor-Auswahl und Einheit prüfen.",
             ", ".join(invalid_phases), MIN_PHASE_VOLTAGE_V, MAX_PHASE_VOLTAGE_V,
         )
+        _publish(hass, entry)
+        return
+    if all(value == -1 for value in values):
+        _LOGGER.warning("Ortsnetz-Auslastung sendet keine Messung: Mindestens eine Phase muss gemessen werden")
         _publish(hass, entry)
         return
     payload = {
@@ -82,8 +86,9 @@ async def _send(hass: HomeAssistant, entry: ConfigEntry) -> None:
         "l1_v": values[0], "l2_v": values[1], "l3_v": values[2],
         "integration_version": str((await async_get_integration(hass, DOMAIN)).version),
     }
-    if data.get(CONF_PLANT_CAPACITY_KWP) is not None:
-        payload[CONF_PLANT_CAPACITY_KWP] = data[CONF_PLANT_CAPACITY_KWP]
+    capacity_kwp = data.get(CONF_PLANT_CAPACITY_KWP)
+    if capacity_kwp is not None:
+        payload[CONF_PLANT_CAPACITY_KWP] = capacity_kwp
     smartmeter_model = (data.get(CONF_SMARTMETER_MODEL) or "").strip()
     if smartmeter_model:
         payload[CONF_SMARTMETER_MODEL] = smartmeter_model
@@ -94,6 +99,10 @@ async def _send(hass: HomeAssistant, entry: ConfigEntry) -> None:
             _LOGGER.warning("PV-Forecast-Sensor für Ortsnetz-Auslastung ist nicht verfügbar")
         elif not 0 <= forecast_kwh <= 100000:
             _LOGGER.warning("PV-Forecast %g kWh liegt außerhalb von 0 bis 100000 kWh und wird nicht gesendet", forecast_kwh)
+        elif capacity_kwp is None:
+            _LOGGER.warning("PV-Forecast wird nicht gesendet: Anlagengröße (kWp) fehlt; Spannungswerte werden weiterhin übertragen")
+        elif forecast_kwh / capacity_kwp > 10:
+            _LOGGER.warning("PV-Forecast %g kWh überschreitet 10 kWh/kWp pro Tag bei %g kWp und wird nicht gesendet", forecast_kwh, capacity_kwp)
         else:
             payload["pv_forecast_kwh"] = forecast_kwh
     frequency_entity = data.get(CONF_GRID_FREQUENCY_ENTITY)
@@ -126,7 +135,14 @@ async def _send(hass: HomeAssistant, entry: ConfigEntry) -> None:
                         result = {}
                     # Tuples instead of sets: unexpected lists or dicts must not raise TypeError.
                     status = result.get("status")
-                    if not (isinstance(status, dict) and all(status.get(key) in ("green", "yellow", "red") for key in ("l1", "l2", "l3", "overall"))):
+                    if not (
+                        isinstance(status, dict)
+                        and status.get("overall") in ("green", "yellow", "red")
+                        and all(
+                            status.get(key) in (("unavailable",) if value == -1 else ("green", "yellow", "red"))
+                            for key, value in zip(("l1", "l2", "l3"), values)
+                        )
+                    ):
                         _LOGGER.debug("Ortsnetz-API lieferte noch keinen Spannungsstatus")
                         status = None
                     recommendation = result.get("storage_recommendation")
