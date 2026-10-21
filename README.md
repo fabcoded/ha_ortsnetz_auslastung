@@ -1,6 +1,6 @@
 # Ortsnetz-Auslastung für Home-Assistant-Admins
 
-Diese Anleitung richtet sich an Personen, die eine Home-Assistant-Instanz betreuen. Die HACS-Integration sendet die drei Phasenspannungen L1, L2 und L3 sowie den Standort deiner Instanz an die Ortsnetz-Auslastung-API. Nach dem ersten Senden werden die Werte alle fünf Minuten übertragen.
+Diese Anleitung richtet sich an Personen, die eine Home-Assistant-Instanz betreuen. Die HACS-Integration sendet die drei Phasenspannungen L1, L2 und L3 sowie den Standort deiner Instanz an die Ortsnetz-Auslastung-API. Nach dem ersten Senden werden die Werte alle fünf Minuten übertragen. Ab der zweiten Übertragung kommen Minimum, Maximum und zeitgewichteter Mittelwert der Spannungen und der Netzfrequenz über die fünf Minuten dazu, damit kurze Spitzen zwischen zwei Übertragungen nicht verloren gehen. Dafür muss der Sensor im Intervall mindestens eine Minute und mindestens die Hälfte der Zeit gültige Werte geliefert haben, sonst fehlen diese Felder.
 
 ## Ortsnetz-Auslastung
 
@@ -118,7 +118,7 @@ Auch die Phasenattribute `L1`, `L2` und `L3` liefern jetzt `normal`, `warning` o
 
 ## Datenschutz
 
-Die Integration übermittelt Koordinaten, Zeitstempel, die drei Spannungswerte, Netzfrequenz sowie Angaben zu PV-Anlage und Forecast. Optional wird Hersteller und Typ des Smartmeters übertragen; diese Angabe ist ausschließlich im geschützten Adminbereich sichtbar. Die öffentliche Karte zeigt Koordinaten nur gerastert mit etwa 100 Metern Genauigkeit. Die Integration sendet die eingetragenen Koordinaten jedoch ungerundet an den Server; die Rasterung betrifft nur die öffentliche Karte. Verwende bei Bedarf die überschreibbaren Koordinaten, um einen alternativen Standort zu senden.
+Die Integration übermittelt Koordinaten, Zeitstempel, die drei Spannungswerte, Netzfrequenz (jeweils mit Minimum, Maximum und Mittelwert über fünf Minuten) sowie Angaben zu PV-Anlage und Forecast. Optional wird Hersteller und Typ des Smartmeters übertragen; diese Angabe ist ausschließlich im geschützten Adminbereich sichtbar. Die öffentliche Karte zeigt Koordinaten nur gerastert mit etwa 100 Metern Genauigkeit. Die Integration sendet die eingetragenen Koordinaten jedoch ungerundet an den Server; die Rasterung betrifft nur die öffentliche Karte. Verwende bei Bedarf die überschreibbaren Koordinaten, um einen alternativen Standort zu senden.
 
 ## Kontakt
 
