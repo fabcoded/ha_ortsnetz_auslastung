@@ -33,6 +33,9 @@
           "latitude": "Latitude",
           "longitude": "Longitude"
         },
+        "data_description": {
+          "pv_forecast_entity": "Forecast for the whole current day in kWh, not the energy still to come today. A sensor for the rest of the day drops to 0 by the evening and distorts the forecast yield on the map."
+        },
         "sections": {
           "phase_voltages": {
             "name": "Phase voltages (V)",
@@ -63,6 +66,9 @@
           "smartmeter_model": "Smart meter manufacturer / model – optional",
           "latitude": "Latitude",
           "longitude": "Longitude"
+        },
+        "data_description": {
+          "pv_forecast_entity": "Forecast for the whole current day in kWh, not the energy still to come today. A sensor for the rest of the day drops to 0 by the evening and distorts the forecast yield on the map."
         },
         "sections": {
           "phase_voltages": {

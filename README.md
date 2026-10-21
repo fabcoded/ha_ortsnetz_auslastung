@@ -15,7 +15,7 @@ Für eine Karte der öffentlichen Messpunkte steht zusätzlich das Community-Pro
 
 Beim Einrichten legt die Integration zusätzlich die Entitäten **Netzspannungsstatus** und **Batteriespeicherempfehlung** an; ihre Werte erscheinen nach der ersten erfolgreichen Übertragung. Der Netzspannungsstatus ist der jeweils schlechteste Phasenstatus (`Normal`, `Warnung` oder `Kritisch`); die Attribute `L1`, `L2` und `L3` zeigen die Einzelbewertungen. Die Batteriespeicherempfehlung ist bei Überspannung `Laden`, bei Unterspannung `Entladen` und bei normaler Spannung `Keine Aktion`. Bei gleichzeitiger Über- und Unterspannung hat `Entladen` Vorrang. Beide Werte kommen in der Antwort der bestehenden Messübertragung zurück und erzeugen keinen zusätzlichen API-Aufruf. Schlägt eine Übertragung auch im zweiten Versuch fehl oder wird sie wegen eines fehlenden oder unplausiblen Spannungswerts übersprungen, sind beide Entitäten nicht verfügbar, bis die API wieder einen gültigen Wert liefert.
 
-- Optional: Eine numerische Forecast-Sensor-Entität mit dem erwarteten PV-Tagesertrag in kWh
+- Optional: Eine numerische Forecast-Sensor-Entität mit dem erwarteten PV-Ertrag des ganzen aktuellen Tages in kWh (nicht der Rest des Tages)
 - Eine numerische Sensor-Entität für die Netzfrequenz in Hz, z. B. `50.01`
 - Vom Server-Admin bereitgestellte öffentliche API-Adresse per HTTPS
 
@@ -69,7 +69,7 @@ Warte, bis Home Assistant wieder vollständig erreichbar ist.
    | Sensor L2 | Sensor-Entität für Phase L2 |
    | Sensor L3 | Sensor-Entität für Phase L3 |
    | Anlagengröße (kWp) | Optional, für die Forecast-Übertragung erforderlich. Tatsächlich installierte Nennleistung der PV-Anlage in Kilowatt-Peak, z. B. `9.8` mit Punkt als Trenner. |
-   | PV-Forecast heute (kWh) | Optionaler Forecast-Sensor für den erwarteten PV-Ertrag des aktuellen Tages; wird nur mit konfigurierter Anlagengröße übertragen |
+   | PV-Forecast heute (kWh) | Optionaler Forecast-Sensor für den erwarteten PV-Ertrag des ganzen aktuellen Tages; wird nur mit konfigurierter Anlagengröße übertragen. Nicht die für heute noch verbleibende Energie: Ein solcher Sensor sinkt bis zum Abend auf 0 und verfälscht den Forecast-Ertrag auf der Karte. |
    | Smartmeter Hersteller / Typ | Optionaler Freitext, z. B. Hersteller und Modell des Smartmeters. Er wird nur im Adminbereich der Ortsnetz-Auslastung angezeigt. |
    | Netzfrequenz (Hz) | Frequenz-Sensor des Smartmeters, dessen Wert in Hertz geliefert wird |
    | Breitengrad / Längengrad | Standardmäßig der Home-Assistant-Standort; bei Bedarf überschreiben |

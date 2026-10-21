@@ -33,6 +33,9 @@
           "latitude": "Breitengrad",
           "longitude": "Längengrad"
         },
+        "data_description": {
+          "pv_forecast_entity": "Prognose für den gesamten heutigen Tag in kWh, nicht die für heute noch verbleibende Energie. Ein Sensor für den Rest des Tages sinkt bis zum Abend auf 0 und verfälscht den Forecast-Ertrag auf der Karte."
+        },
         "sections": {
           "phase_voltages": {
             "name": "Phasenspannungen (V)",
@@ -63,6 +66,9 @@
           "smartmeter_model": "Smartmeter Hersteller / Typ – optional",
           "latitude": "Breitengrad",
           "longitude": "Längengrad"
+        },
+        "data_description": {
+          "pv_forecast_entity": "Prognose für den gesamten heutigen Tag in kWh, nicht die für heute noch verbleibende Energie. Ein Sensor für den Rest des Tages sinkt bis zum Abend auf 0 und verfälscht den Forecast-Ertrag auf der Karte."
         },
         "sections": {
           "phase_voltages": {
